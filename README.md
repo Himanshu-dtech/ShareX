@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # FractionX 💎  
 ### Democratizing High-Value Asset Investment via Fractionalization
@@ -126,3 +127,6 @@ Built with ❤️ for HackXios 2025
 
 
 
+=======
+# ShareX
+>>>>>>> 5d175db7959c83ca62d33724563f14d5c7423d76
