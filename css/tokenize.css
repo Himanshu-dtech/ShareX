@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: 1.5fr 1fr; /* Form takes more space, Preview takes less */
     gap: 30px;
-    margin-top: 20px;
+     margin-top: 20px;
 }
 
 @media (max-width: 900px) {
