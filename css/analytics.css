@@ -1,7 +1,7 @@
 /* --- ANALYTICS SPECIFIC VARIABLES --- */
 /* These fill in the gaps missing from global.css */
 :root {
-    --bg-input: rgba(0, 0, 0, 0.2);
+     --bg-input: rgba(0, 0, 0, 0.2);
     --danger: #ef4444;
     --shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
