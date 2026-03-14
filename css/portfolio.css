@@ -3,7 +3,7 @@
     display: grid;
     grid-template-columns: 350px 1fr; /* Left panel fixed width, Right panel fills rest */
     gap: 2rem;
-}
+ }
 
 /* --- Left Panel (Wallet & Chart) --- */
 .left-panel {
