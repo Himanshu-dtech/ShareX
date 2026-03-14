@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analysis | FractionX</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'] },
+                    colors: { navy: { 900: '#020617', 800: '#0f172a', 700: '#1e293b' }, primary: '#6366f1', accent: '#d946ef' }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/dashboard-sidebar.css">
+    <style>
+        .chat-container {
+            height: calc(100vh - 160px); 
+        }
+        
+        /* ADDED: CSS to force Tailwind to show bullet points and bold text in the chat */
+        .markdown-body ul {
+            list-style-type: disc;
+            padding-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .markdown-body li {
+            margin-bottom: 0.25rem;
+        }
+        .markdown-body strong {
+            color: #ffffff;
+            font-weight: 700;
+        }
+        .markdown-body p {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <i class="fas fa-rocket"></i> 
+            <span class="brand-text">FractionX</span>
+        </div>
+        <ul class="side-menu">
+            <li class="active"><a href="dashboard.html"><i class="fas fa-chart-pie"></i> <span class="link-text">Overview</span></a></li>
+            
+            <li class="user-only"><a href="marketplace.html"><i class="fas fa-store"></i> <span class="link-text">Marketplace</span></a></li>
+            <li class="user-only"><a href="portfolio.html"><i class="fas fa-wallet"></i> <span class="link-text">My Portfolio</span></a></li>
+            
+            <li id="admin-only-tokenize" style="display: none;"><a href="tokenize.html"><i class="fas fa-pen-fancy"></i> <span class="link-text">Tokenize Asset</span></a></li>
+            
+            <li><a href="analytics.html"><i class="fas fa-chart-line"></i> <span class="link-text">Analytics</span></a></li>
+            
+            <li class="user-only"><a href="ai-analysis.html"><i class="fas fa-robot"></i> <span class="link-text">AI Analysis</span></a></li>
+            
+            <li><a href="profile.html"><i class="fas fa-user"></i> <span class="link-text">My Profile</span></a></li>
+        </ul>
+        <div class="sidebar-footer">
+            <button class="footer-btn" id="themeToggle">
+                <i class="fas fa-moon"></i> <span class="link-text">Dark Mode</span>
+            </button>
+            <a href="login.html" class="logout-link">
+                <i class="fas fa-sign-out-alt"></i> <span class="link-text">Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        
+        <header class="top-bar" style="margin-bottom: 20px;">
+            <div style="display:flex; align-items:center; width:100%;">
+                <button id="sidebarToggle" class="mobile-only" style="background:none; border:none; color:var(--text-main); font-size:1.5rem; margin-right:20px; cursor:pointer;"><i class="fas fa-bars"></i></button>
+                
+                <div style="margin-left:auto; display:flex; align-items:center; gap:20px;">
+                    <div class="user-pill">
+                        <div class="avatar-circle">H</div>
+                        <span id="navUserName">Himanshu Kumar</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-slate-100">AI Asset Analyst</h1>
+            <p class="text-slate-400">Unlock predictive analytics and verify asset valuations.</p>
+        </div>
+
+        <div id="ai-chat-interface" class="chat-container w-full bg-navy-800 border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden">
+            
+            <div class="bg-gradient-to-r from-primary to-accent p-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <i class="fas fa-robot text-white"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold">FractionX AI</h3>
+                        <p class="text-white/80 text-xs">Online • Ready to analyze</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="chat-body" class="flex-1 p-6 overflow-y-auto bg-navy-900/50 flex flex-col gap-4">
+                <div class="bg-navy-700 text-slate-200 p-3.5 rounded-xl rounded-tl-none self-start max-w-[80%] border border-white/5 shadow-sm markdown-body">
+                    Welcome! I am your dedicated AI Analyst. How can I help you evaluate assets today?
+                </div>
+            </div>
+
+            <div class="p-4 bg-navy-800 border-t border-white/5 flex gap-3 items-end">
+                <textarea id="chat-input" placeholder="Ask about an asset's ROI, verify land value, or predict trends..." class="flex-1 bg-navy-900 border border-white/10 text-white rounded-xl px-4 py-3 focus:border-primary focus:outline-none resize-none h-14" onkeypress="handleChatEnter(event)"></textarea>
+                <button onclick="sendMessage()" class="bg-primary hover:bg-indigo-500 text-white h-14 w-14 rounded-xl transition-colors flex items-center justify-center shadow-lg">
+                    <i class="fas fa-paper-plane text-lg"></i>
+                </button>
+            </div>
+            
+        </div>
+
+    </main>
+
+    <script>
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+
+            const chatBody = document.getElementById('chat-body');
+
+            // --- 1. Add User Message to UI ---
+            chatBody.innerHTML += `
+                <div class="bg-primary/20 text-white p-3.5 rounded-xl rounded-tr-none self-end max-w-[80%] border border-primary/30 shadow-sm mt-2">
+                    ${message}
+                </div>
+            `;
+            input.value = '';
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            // --- 2. Typing Indicator ---
+            const typingId = 'typing-' + Date.now();
+            chatBody.innerHTML += `
+                <div id="${typingId}" class="bg-navy-700 text-slate-400 p-3.5 rounded-xl rounded-tl-none self-start max-w-[80%] border border-white/5 italic text-sm mt-2 flex items-center gap-2">
+                    <i class="fas fa-circle-notch fa-spin text-primary"></i> Analyzing market data...
+                </div>
+            `;
+            chatBody.scrollTop = chatBody.scrollHeight;
+
+            try {
+                // --- 3. FETCH LIVE DATABASE CONTEXT (The Hackathon RAG Trick!) ---
+                let marketContext = "No active listings right now.";
+                // Using the API_URL from global.js if available, else fallback
+                const apiUrl = typeof API_URL !== 'undefined' ? API_URL : "http://localhost:5000";
+                
+                try {
+                    const dbRes = await fetch(`${apiUrl}/properties`);
+                    if (dbRes.ok) {
+                        const properties = await dbRes.json();
+                        if (properties.length > 0) {
+                            // Convert JSON to a readable text list for the AI
+                            marketContext = properties.map(p => 
+                                `- ${p.title} (${p.category}): Valuation ₹${(Number(p.price)||0).toLocaleString('en-IN')}, Token Price: ₹${p.fractionPrice}, ROI: ${p.roi}%, Location: ${p.location}`
+                            ).join('\n');
+                        }
+                    }
+                } catch(e) {
+                    console.warn("Could not fetch DB context. Using generic AI.");
+                }
+
+                // --- 4. COMBINE CONTEXT WITH USER MESSAGE ---
+                const enrichedPrompt = `
+You are FractionX AI, an elite financial advisor for a fractional asset platform. 
+Always answer using formatting like bolding and bullet points. Be concise, professional, and helpful.
+
+Here is the LIVE DATA of the exact assets currently available on our platform right now:
+${marketContext}
+
+If the user asks for recommendations or what assets are available, ONLY recommend assets from the list above. Provide the exact ROI and Token Price from the list.
+
+User's Query: ${message}
+                `;
+
+                // --- 5. SEND TO BACKEND ---
+                // Note: Make sure the route ('/api/analyze' or '/chat') and the body key ('message' or 'prompt') match your backend exactly!
+                const res = await fetch(`${apiUrl}/api/analyze`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: enrichedPrompt }) // Sent the enriched prompt
+                });
+                
+                const data = await res.json();
+                
+                // Remove typing indicator
+                const typingIndicator = document.getElementById(typingId);
+                if(typingIndicator) typingIndicator.remove();
+
+                if (data.success || data.reply || data.response) {
+                    // Extract the reply (check both common key names)
+                    const aiReplyText = data.reply || data.response;
+                    
+                    // Format with marked.js
+                    let formattedHTML = aiReplyText;
+                    if (typeof marked !== 'undefined') {
+                        formattedHTML = marked.parse(aiReplyText);
+                    }
+                    
+                    chatBody.innerHTML += `
+                        <div class="bg-navy-700 text-slate-200 p-3.5 rounded-xl rounded-tl-none self-start max-w-[80%] border border-white/5 shadow-sm mt-2 markdown-body" style="line-height: 1.6;">
+                            ${formattedHTML}
+                        </div>
+                    `;
+                } else {
+                    throw new Error("API Response Failed");
+                }
+            } catch (error) {
+                console.error("AI Error:", error);
+                const typingIndicator = document.getElementById(typingId);
+                if(typingIndicator) typingIndicator.remove();
+                
+                chatBody.innerHTML += `
+                    <div class="bg-red-900/30 text-red-400 p-3.5 rounded-xl rounded-tl-none self-start max-w-[80%] border border-red-500/30 mt-2">
+                        ❌ Connection error to AI Engine. Please check your backend.
+                    </div>
+                `;
+            }
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function handleChatEnter(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+    </script>
+    <script src="js/global.js"></script>
+</body>
+</html>

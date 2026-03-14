@@ -35,10 +35,13 @@
         </div>
 
         <div class="flex bg-navy-900 p-1 rounded-lg mb-6 border border-white/5">
-            <button onclick="switchTab('login')" id="tab-login" class="flex-1 py-2 text-sm font-bold rounded-md bg-navy-700 text-white shadow transition-all">
-                Login
+            <button onclick="switchTab('login')" id="tab-login" class="flex-1 py-2 text-[10px] font-bold rounded-md bg-navy-700 text-white shadow transition-all">
+                User
             </button>
-            <button onclick="switchTab('signup')" id="tab-signup" class="flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white transition-all">
+            <button onclick="switchTab('admin')" id="tab-admin" class="flex-1 py-2 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">
+                Admin
+            </button>
+            <button onclick="switchTab('signup')" id="tab-signup" class="flex-1 py-2 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all">
                 Sign Up
             </button>
         </div>
@@ -62,8 +65,8 @@
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-primary/25 mt-2">
-                Log In
+            <button type="submit" id="loginBtn" class="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-primary/25 mt-2">
+                Log In as User
             </button>
         </form>
 
@@ -106,124 +109,106 @@
     </div>
 
     <script>
-        function getUserKey(email, key) {
-    return `fractionx_${email}_${key}`;
-}
+        const API_URL = "http://localhost:5000";
+        let currentRole = 'user';
 
-        // --- 1. TAB SWITCHING ---
         function switchTab(tab) {
             const loginForm = document.getElementById('login-form');
             const signupForm = document.getElementById('signup-form');
             const loginTab = document.getElementById('tab-login');
+            const adminTab = document.getElementById('tab-admin');
             const signupTab = document.getElementById('tab-signup');
+            const loginBtn = document.getElementById('loginBtn');
 
-            // Reset inputs
             loginForm.reset();
             signupForm.reset();
 
+            [loginTab, adminTab, signupTab].forEach(t => {
+                t.className = "flex-1 py-2 text-[10px] font-bold rounded-md text-slate-400 hover:text-white transition-all";
+            });
+
             if(tab === 'login') {
+                currentRole = 'user';
                 loginForm.classList.remove('hidden');
                 signupForm.classList.add('hidden');
-                loginTab.className = "flex-1 py-2 text-sm font-bold rounded-md bg-navy-700 text-white shadow transition-all";
-                signupTab.className = "flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white transition-all";
+                loginTab.className = "flex-1 py-2 text-[10px] font-bold rounded-md bg-navy-700 text-white shadow transition-all";
+                loginBtn.innerText = "Log In as User";
+            } else if (tab === 'admin') {
+                currentRole = 'admin';
+                loginForm.classList.remove('hidden');
+                signupForm.classList.add('hidden');
+                adminTab.className = "flex-1 py-2 text-[10px] font-bold rounded-md bg-navy-700 text-white shadow transition-all";
+                loginBtn.innerText = "Log In as Admin";
             } else {
                 loginForm.classList.add('hidden');
                 signupForm.classList.remove('hidden');
-                signupTab.className = "flex-1 py-2 text-sm font-bold rounded-md bg-navy-700 text-white shadow transition-all";
-                loginTab.className = "flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white transition-all";
+                signupTab.className = "flex-1 py-2 text-[10px] font-bold rounded-md bg-navy-700 text-white shadow transition-all";
             }
         }
 
-        // --- 2. SIGN UP LOGIC (Saves to Browser Memory) ---
-        function handleSignup(event) {
+        async function handleLogin(event) {
             event.preventDefault();
-            
-            const btn = document.querySelector('#signup-form button');
-            const originalText = btn.innerText;
-            btn.innerText = "Creating Account...";
-            btn.disabled = true;
-
-            const name = document.getElementById('signup-name').value;
-            const email = document.getElementById('signup-email').value;
-            const pass = document.getElementById('signup-pass').value;
-
-            setTimeout(() => {
-                // 1. Get existing users from "Fake Database" (LocalStorage)
-                let usersDB = JSON.parse(localStorage.getItem('fractionx_users_db')) || [];
-
-                // 2. Check if email already exists
-                const userExists = usersDB.find(u => u.email === email);
-                if (userExists) {
-                    alert("⚠️ User already exists! Please Login.");
-                    switchTab('login');
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                    return;
-                }
-
-                // 3. Add new user to "Fake Database"
-                const newUser = { name, email, pass };
-                usersDB.push(newUser);
-                localStorage.setItem('fractionx_users_db', JSON.stringify(usersDB));
-
-                // 4. Success!
-                alert("✅ Account created successfully! Please Log In.");
-                switchTab('login');
-                
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }, 1000);
-        }
-
-        // --- 3. LOGIN LOGIC (Checks Browser Memory) ---
-        function handleLogin(event) {
-            event.preventDefault();
-
-            const btn = document.querySelector('#login-form button');
+            const btn = document.getElementById('loginBtn');
             const originalText = btn.innerText;
             btn.innerText = "Verifying...";
             btn.disabled = true;
 
             const email = document.getElementById('login-email').value;
-            const pass = document.getElementById('login-pass').value;
+            const password = document.getElementById('login-pass').value;
 
-            setTimeout(() => {
-                // 1. Get users from "Fake Database"
-                let usersDB = JSON.parse(localStorage.getItem('fractionx_users_db')) || [];
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password, role: currentRole })
+                });
+                const data = await res.json();
 
-                // 2. Find User
-                const validUser = usersDB.find(u => u.email === email && u.pass === pass);
-
-                if (validUser) {
-                    // SUCCESS: Login the user
-                    const sessionUser = { name: validUser.name, email: validUser.email };
-                    localStorage.setItem('user', JSON.stringify(sessionUser));
-
-                    // Initialize Wallet for this user if new
-                   const balanceKey = getUserKey(validUser.email, 'balance');
-const investmentsKey = getUserKey(validUser.email, 'investments');
-
-// Initialize wallet ONLY for this user
-if (!localStorage.getItem(balanceKey)) {
-    localStorage.setItem(balanceKey, '0');
-}
-
-if (!localStorage.getItem(investmentsKey)) {
-    localStorage.setItem(investmentsKey, JSON.stringify([]));
-}
-
-
+                if (data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     window.location.href = "dashboard.html";
                 } else {
-                    // FAIL
-                    alert("❌ Invalid Email or Password. Try again or Sign Up.");
-                    btn.innerText = originalText;
-                    btn.disabled = false;
+                    alert("❌ " + data.message);
                 }
-            }, 1000);
+            } catch (error) {
+                alert("Could not connect to server. Ensure Backend is running.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
         }
-        
 
+        async function handleSignup(event) {
+            event.preventDefault();
+            const btn = document.querySelector('#signup-form button');
+            btn.innerText = "Creating Account...";
+            btn.disabled = true;
+
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-pass').value;
+
+            try {
+                const res = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert("✅ Account created! Please Log In.");
+                    switchTab('login');
+                } else {
+                    alert("❌ " + data.message);
+                }
+            } catch (error) {
+                alert("Could not connect to server.");
+            } finally {
+                btn.innerText = "Create Account";
+                btn.disabled = false;
+            }
+        }
     </script>
 </body>
 </html>

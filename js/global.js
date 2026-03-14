@@ -1,31 +1,28 @@
 console.log("🚀 Global Script Loaded");
 
-// CHANGE THIS IF NEEDED (Use your 5000 or 5001 port)
-const API_URL = "https://fractionx-hackxios.onrender.com";
+// Set this to your local server URL for testing
+const API_URL = "http://localhost:5000"; 
 
 document.addEventListener('DOMContentLoaded', async () => {
     
-    // --- 1. HEADER USERNAME FIX ---
+    // --- 1. ROLE-BASED SIDEBAR CONTROL ---
+    // Run this first to hide/show elements based on the stored user role
+    setupRoleBasedUI();
+
+    // --- 2. HEADER USERNAME FIX ---
     await updateGlobalHeader();
 
-    // --- 2. SIDEBAR TOGGLE LOGIC (UPDATED FOR MOBILE) ---
+    // --- 3. SIDEBAR TOGGLE LOGIC ---
     setupSidebar();
 
-    // --- 3. DARK MODE TOGGLE ---
+    // --- 4. DARK MODE TOGGLE ---
     setupDarkMode();
 
-    // --- 4. LOGOUT LOGIC (PRESERVED) ---
+    // --- 5. LOGOUT LOGIC ---
     const logoutLinks = document.querySelectorAll('.logout-link');
-    
-    if (logoutLinks.length === 0) {
-        console.warn("⚠️ No logout links found in the DOM.");
-    }
-
     logoutLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault(); 
-            console.log("🚪 Logout clicked");
-
             if(confirm("Are you sure you want to logout?")) {
                 localStorage.removeItem('user');
                 window.location.href = "login.html";
@@ -36,18 +33,56 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // --- HELPER FUNCTIONS ---
 
+/**
+ * Controls menu visibility based on user role (Admin vs User)
+ */
+/**
+ * Controls menu visibility based on user role (Admin vs User)
+ */
+function setupRoleBasedUI() {
+    const localUser = JSON.parse(localStorage.getItem('user'));
+    const tokenizeMenuItem = document.getElementById('admin-only-tokenize');
+    
+    // Find all menu items marked for regular users only
+    const userOnlyItems = document.querySelectorAll('.user-only');
+
+    if (localUser && localUser.isAdmin === true) {
+        // --- ADMIN MODE ---
+        if (tokenizeMenuItem) tokenizeMenuItem.style.display = 'block';
+        
+        // Hide all personal user links
+        userOnlyItems.forEach(item => item.style.display = 'none');
+        
+        console.log("👑 Role Detected: Admin. Adjusting sidebar.");
+    } else {
+        // --- USER MODE ---
+        if (tokenizeMenuItem) tokenizeMenuItem.style.display = 'none';
+        
+        // Show personal user links
+        userOnlyItems.forEach(item => item.style.display = '');
+        
+        console.log("👤 Role Detected: User. Adjusting sidebar.");
+    }
+}
+
+/**
+ * Updates the navigation bar with user info
+ */
 async function updateGlobalHeader() {
     try {
         const localUser = JSON.parse(localStorage.getItem('user'));
         
         if (localUser && localUser.name) {
             updateUserUI(localUser);
-        } else {
-            // Fallback to Server Fetch
-            const res = await fetch(`${API_BASE_URL}/user`);
+        } else if (localUser && localUser.email) {
+            // If local data is missing name, fetch fresh data from backend
+            const res = await fetch(`${API_URL}/user?email=${localUser.email}`);
             if (res.ok) {
                 const user = await res.json();
                 updateUserUI(user);
+                // Sync the local storage with fresh data (including isAdmin status)
+                localStorage.setItem('user', JSON.stringify(user));
+                setupRoleBasedUI(); // Re-run UI check with fresh data
             }
         }
     } catch (err) { 
@@ -71,7 +106,6 @@ function setupSidebar() {
     const toggleBtn = document.getElementById('sidebarToggle');
     const mainContent = document.querySelector('.main-content');
     
-    // Check saved preference for Desktop Collapse
     const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
     if(isCollapsed && window.innerWidth > 900 && sidebar) {
         sidebar.classList.add('collapsed');
@@ -81,20 +115,16 @@ function setupSidebar() {
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
-            
             if (window.innerWidth > 900) {
-                // DESKTOP: Collapse Mode
                 sidebar.classList.toggle('collapsed');
                 const collapsed = sidebar.classList.contains('collapsed');
                 if(mainContent) mainContent.style.marginLeft = collapsed ? '80px' : '260px';
                 localStorage.setItem('sidebar-collapsed', collapsed);
             } else {
-                // MOBILE: Slide Mode (Changed '.open' to '.active' to match CSS)
                 sidebar.classList.toggle('active');
             }
         });
 
-        // Mobile: Click outside to close
         document.addEventListener('click', (e) => {
             if (window.innerWidth <= 900 && sidebar.classList.contains('active')) { 
                 if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {

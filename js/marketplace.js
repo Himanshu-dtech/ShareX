@@ -1,5 +1,3 @@
-
-
 // ================================
 // USER HELPERS
 // ================================
@@ -59,10 +57,7 @@ function updateAllBalances() {
 }
 
 // ================================
-// MARKETPLACE
-// ================================
-// ================================
-// MARKETPLACE LOAD LOGIC (Fixed)
+// MARKETPLACE LOAD LOGIC
 // ================================
 async function loadMarketplace() {
     const container = document.getElementById('assetsGrid');
@@ -70,8 +65,7 @@ async function loadMarketplace() {
 
     container.innerHTML = '<p style="color:white;text-align:center;">Loading assets...</p>';
 
-    // 1. Get Locally Tokenized Assets (The missing link!)
-    // This reads the assets you created in the Tokenize page
+    // 1. Get Locally Tokenized Assets
     const localKey = getUserKey(currentUser.email, 'tokenized_assets');
     const localAssets = JSON.parse(localStorage.getItem(localKey)) || [];
 
@@ -86,7 +80,7 @@ async function loadMarketplace() {
         backendAssets = MOCK_ASSETS;
     }
 
-    // 3. Merge Them (Local first, so your new asset shows at top)
+    // 3. Merge Them
     allProperties = [...localAssets, ...backendAssets];
 
     renderGrid(allProperties);
@@ -97,6 +91,9 @@ function renderGrid(properties) {
     container.innerHTML = '';
 
     properties.forEach(prop => {
+        // ADDED: Default to 1000 tokens if totalTokens isn't specified
+        const totalTokens = prop.totalTokens || 1000; 
+
         const card = document.createElement('div');
         card.className = 'property-card';
         card.innerHTML = `
@@ -112,7 +109,7 @@ function renderGrid(properties) {
                     <div><small>Token Price</small><strong>₹${prop.fractionPrice.toLocaleString('en-IN')}</strong></div>
                 </div>
                 <button class="invest-btn"
-                    onclick="openModal('${prop._id}','${prop.title}',${prop.fractionPrice})">
+                    onclick="openModal('${prop._id}','${prop.title}',${prop.fractionPrice}, ${totalTokens})">
                     Invest Now
                 </button>
             </div>
@@ -137,10 +134,16 @@ window.filterMarketplace = function(category, btn) {
 // ================================
 const modal = document.getElementById('investModal');
 
-window.openModal = function(id, title, price) {
+// ADDED: Accepting totalTokens as a parameter
+window.openModal = function(id, title, price, totalTokens) {
     document.getElementById('modalAssetId').value = id;
     document.getElementById('modalAssetName').innerText = title;
     document.getElementById('modalTokenPrice').value = price;
+    
+    // ADDED: Set the hidden field for total tokens
+    const totalTokensInput = document.getElementById('modalTotalTokens');
+    if(totalTokensInput) totalTokensInput.value = totalTokens;
+    
     document.getElementById('investTokens').value = 1;
     calculateTotal();
     modal.style.display = 'flex';
@@ -159,31 +162,49 @@ window.calculateTotal = function() {
 // CONFIRM INVESTMENT
 // ================================
 window.confirmInvestment = function() {
-    const tokens = parseInt(document.getElementById('investTokens').value);
+    const tokensToBuy = parseInt(document.getElementById('investTokens').value);
     const price = parseInt(document.getElementById('modalTokenPrice').value);
     const assetName = document.getElementById('modalAssetName').innerText;
     const assetId = document.getElementById('modalAssetId').value;
+    
+    // Read total tokens from the hidden input, fallback to 1000 if not found
+    const totalTokensInput = document.getElementById('modalTotalTokens');
+    const totalTokens = totalTokensInput ? parseInt(totalTokensInput.value) : 1000;
 
-    const totalAmount = tokens * price;
+    const totalAmount = tokensToBuy * price;
 
     if (walletBalance < totalAmount) {
-        alert("❌ Insufficient Balance");
+        alert("❌ Insufficient Balance. Please add funds to your wallet.");
         return;
     }
 
     const balanceKey = getUserKey(currentUser.email, 'balance');
     const investmentsKey = getUserKey(currentUser.email, 'investments');
+    const investments = JSON.parse(localStorage.getItem(investmentsKey)) || [];
 
+    // --- 5% LIMIT LOGIC ---
+    let currentlyOwnedTokens = 0;
+    investments.forEach(inv => {
+        if (inv.assetId === assetId) {
+            currentlyOwnedTokens += parseInt(inv.tokens);
+        }
+    });
+
+    const maxAllowedTokens = Math.max(1, Math.floor(totalTokens * 0.05));
+
+    if ((currentlyOwnedTokens + tokensToBuy) > maxAllowedTokens) {
+        alert(`❌ Purchase Limit Exceeded!\n\nTo ensure fair distribution, you can only own up to 5% (${maxAllowedTokens} tokens) of this asset.\n\nYou currently own ${currentlyOwnedTokens} tokens.`);
+        return;
+    }
+
+    // Process Transaction
     walletBalance -= totalAmount;
     localStorage.setItem(balanceKey, walletBalance);
-
-    const investments =
-        JSON.parse(localStorage.getItem(investmentsKey)) || [];
 
     investments.push({
         assetId,
         assetName,
-        tokens,
+        tokens: tokensToBuy,
         amount: totalAmount,
         date: new Date().toISOString()
     });
@@ -193,7 +214,7 @@ window.confirmInvestment = function() {
     updateAllBalances();
     closeModal();
 
-    alert(`🎉 Investment Successful!\nYou bought ${tokens} tokens of ${assetName}`);
+    alert(`🎉 Investment Successful!\nYou bought ${tokensToBuy} tokens of ${assetName}`);
 };
 
 // ================================
