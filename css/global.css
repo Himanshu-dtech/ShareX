@@ -6,7 +6,7 @@
     --text-color: #111827;         /* Dark text */
     --input-bg: #ffffff;           /* White inputs */
     --border-color: #e5e7eb;       /* Light border */
-}
+ }
 
 body.dark-mode {
     /* Dark Mode Colors */
