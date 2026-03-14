@@ -4,7 +4,7 @@
     grid-template-columns: 1.5fr 1fr 1fr; /* Net Worth card is wider */
     gap: 25px;
     margin-bottom: 25px;
-}
+ }
 
 .bottom-grid {
     display: grid;
