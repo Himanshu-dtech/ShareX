@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 /**
  * Controls menu visibility based on user role (Admin vs User)
  */
+
 function setupRoleBasedUI() {
     const localUser = JSON.parse(localStorage.getItem('user'));
     const tokenizeMenuItem = document.getElementById('admin-only-tokenize');

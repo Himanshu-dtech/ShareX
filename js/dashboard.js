@@ -1,6 +1,7 @@
 // ================================
 // CONFIG
 // ================================
+const API_URL = "https://sharex-live.onrender.com";
 const STORAGE_KEYS = {
   USER: 'user'
 };

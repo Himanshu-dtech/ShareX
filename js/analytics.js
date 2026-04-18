@@ -2,7 +2,7 @@
 // CONFIG
 // ================================
 const STORAGE_KEY_USER = 'user';
-
+const API_URL = "https://sharex-live.onrender.com";
 
 // ================================
 // INIT
