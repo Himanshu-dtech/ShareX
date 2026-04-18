@@ -1,0 +1,1 @@
+const API_URL = "https://sharex-live.onrender.com";
