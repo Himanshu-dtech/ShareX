@@ -1,4 +1,4 @@
-
+const API_URL = "https://sharex-live.onrender.com";
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("✅ Tokenize Asset Script Loaded");

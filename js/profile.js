@@ -2,6 +2,7 @@
 // USER HELPERS
 // ================================
 const STORAGE_KEY_USER = 'user';
+const API_URL = "https://sharex-live.onrender.com";
 
 function getUserKey(email, key) {
     return `fractionx_${email}_${key}`;

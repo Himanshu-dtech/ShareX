@@ -1,3 +1,4 @@
+const API_URL = "https://sharex-live.onrender.com";
 class FractionXPlatform {
     constructor() {
         this.assets = [];
