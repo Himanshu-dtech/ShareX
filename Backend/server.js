@@ -2,9 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const path = require('path');
+
+// --- 🤖 GROQ AI SETUP ---
+const OpenAI = require('openai');
+
+// Initialize the OpenAI client to point to Groq's Base URL
+const groqClient = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1", 
+});
 
 // Models
 const User = require('./models/User');
@@ -82,14 +89,13 @@ app.post('/login', async (req, res) => {
         }
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
 // ==========================================
 // ADMIN: DELETE / DELIST AN ASSET
 // ==========================================
 app.delete('/properties/:id', async (req, res) => {
     try {
         const assetId = req.params.id;
-        
-        // Find the property by ID and remove it from MongoDB
         const deletedProperty = await Property.findByIdAndDelete(assetId);
 
         if (!deletedProperty) {
@@ -200,7 +206,7 @@ app.post('/properties', async (req, res) => {
 });
 
 
-// --- 9. AI CHATBOT ROUTE (LIVE GEMINI API) ---
+// --- 9. AI CHATBOT ROUTE (GROQ / LLAMA 3.3) ---
 app.post('/api/analyze', async (req, res) => {
     const { message } = req.body;
     
@@ -209,36 +215,28 @@ app.post('/api/analyze', async (req, res) => {
     }
 
     try {
-        console.log(`🤖 Live AI Request: ${message}`);
+        console.log(`🤖 Live Groq AI Request received!`);
         
-        // Use the Gemini 1.5 Flash model (fast and great for text)
-       const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        // Call the Groq API
+        const completion = await groqClient.chat.completions.create({
+            model: "llama-3.3-70b-versatile", // The specific Groq model you want
+            temperature: 0.5,
+            messages: [
+                { role: "user", content: message } 
+            ]
+        });
 
-        // We wrap the user's message in a "System Prompt" so the AI knows how to act
-        // We wrap the user's message in a "System Prompt" so the AI knows how to act
-        const prompt = `You are the 'FractionX AI Analyst', an expert financial advisor specializing in fractional real estate and luxury asset investment. 
-        
-        When a user asks about an asset, evaluate it and ALWAYS format your response strictly using these 3 sections with bullet points:
-        
-        1. **Key Asset Highlights:** (Briefly list property type, location, and value drivers)
-        2. **Investment & ROI Potential:** (List expected capital appreciation and estimated rental yield percentages)
-        3. **Real-Time Valuation Check:** (Give the current estimated market value. IF the user mentions a specific price in their query, compare their price to the real market value and state if it is a good deal, overpriced, or aligned).
-        
-        Keep your answers concise, professional, and data-driven. Do not use markdown headers (like # or ##), just bold text for the section titles.
-        
-        User Query: ${message}`;
-
-        // Call the Gemini API
-        const result = await model.generateContent(prompt);
-        const aiResponse = result.response.text();
+        // Extract Groq's response
+        const aiResponse = completion.choices[0].message.content;
 
         res.json({ success: true, reply: aiResponse });
 
     } catch (e) {
-        console.error("Gemini API Error:", e);
-        res.status(500).json({ success: false, message: "AI Engine Error. Check your API key or server logs." });
+        console.error("🚨 Groq API Error Details:", e.response ? e.response.data : e.message);
+        res.status(500).json({ success: false, message: "AI Engine Error. Check your Groq API key or server logs." });
     }
 });
+
 // 10. SEED (RESET)
 app.get('/seed', async (req, res) => {
     await Property.deleteMany({});
