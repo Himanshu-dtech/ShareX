@@ -1,7 +1,9 @@
 // ================================
 // CONFIG
 // ================================
-const API_URL = "https://sharex-live.onrender.com";
+// const API_URL = window.location.hostname === "localhost"
+//   ? "http://localhost:5000"
+//   : "https://sharex-live.onrender.com";
 const STORAGE_KEYS = {
   USER: 'user'
 };

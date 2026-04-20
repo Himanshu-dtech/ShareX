@@ -1,5 +1,7 @@
 // CHANGE TO YOUR PORT (5000 or 5001)
-const API_URL = "https://sharex-live.onrender.com";
+const API_URL = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://sharex-live.onrender.com";
 
 let isLoginMode = true;
 
