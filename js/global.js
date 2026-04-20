@@ -1,9 +1,7 @@
 console.log("🚀 Global Script Loaded");
 
 // Set this to your local server URL for testing
-const API_URL = window.location.hostname === "localhost"
-  ? "http://localhost:5000"
-  : "https://sharex-live.onrender.com";
+const API_URL = "";
 
 document.addEventListener('DOMContentLoaded', async () => {
     
