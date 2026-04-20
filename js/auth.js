@@ -1,5 +1,6 @@
 // CHANGE TO YOUR PORT (5000 or 5001)
 const API_URL = "";
+console.log("NEW VERSION LOADED 🚀");
 
 let isLoginMode = true;
 

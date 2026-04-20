@@ -2,6 +2,7 @@ console.log("🚀 Global Script Loaded");
 
 // Set this to your local server URL for testing
 const API_URL = "";
+console.log("NEW VERSION LOADED 🚀");
 
 document.addEventListener('DOMContentLoaded', async () => {
     
